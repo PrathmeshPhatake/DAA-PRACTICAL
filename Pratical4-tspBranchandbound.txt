@@ -1,0 +1,161 @@
+Pratical4-tspBranchandbound:
+code:
+#include <bits/stdc++.h>
+using namespace std;
+
+// Function to find the minimum edge cost from a node 'i' that is not excluded
+int minedge(int **graph, int i, int n, int exclude)
+{
+    int mincost = INT_MAX; // Initialize minimum cost as a large value
+    for (int j = 0; j < n; j++)
+    {
+        // Skip the excluded node and find the minimum edge cost
+        if (graph[i][j] < mincost && exclude != j)
+        {
+            mincost = graph[i][j]; // Update the minimum cost if found a smaller one
+        }
+    }
+    // If no valid edge is found, return 0 (no connection), otherwise return the minimum cost
+    return mincost == INT_MAX ? 0 : mincost;
+}
+
+// Function to calculate the lower bound for the TSP (used to prune branches)
+int cal_lowerbound(int **graph, int n, vector<int>& visited)
+{
+    int lowerbound = 0; // Initialize the lower bound cost
+    for (int i = 0; i < n; i++)
+    {
+        // If the node is not visited, add the minimum edge cost to the lower bound
+        if (!visited[i])
+        {
+            lowerbound += minedge(graph, i, n, -1); // Call minedge to get the minimum cost for node 'i'
+        }
+    }
+    return lowerbound; // Return the computed lower bound
+}
+
+// Function for solving the TSP using Branch and Bound
+void tsp_branchANDbound(int **graph, int n, vector<int>& path, vector<int>& bestpath, 
+                         int currentcost, int &mincost, int level, vector<int>& visited)
+{
+    // If all cities are visited (i.e., we have a complete solution)
+    if (level == n)
+    {
+        // Add the cost of returning to the starting point to complete the cycle
+        currentcost += graph[path[level - 1]][path[0]];
+        // If the current cost is less than the best solution found so far, update the best path
+        if (currentcost < mincost)
+        {
+            mincost = currentcost; // Update the minimum cost
+            bestpath = path; // Save the current path as the best path
+        }
+        return; // Return since we have a complete solution
+    }
+
+    // Loop through all unvisited cities and attempt to visit them
+    for (int i = 0; i < n; i++)
+    {
+        if (!visited[i] && graph[path[level - 1]][i] > 0) // Check if the city is unvisited and there is a valid path
+        {
+            visited[i] = 1; // Mark the city as visited
+            path[level] = i; // Add the city to the path
+            // Calculate the lower bound to prune unpromising branches
+            int lowerbound = cal_lowerbound(graph, n, visited);
+            // Calculate the total cost including the current edge and the lower bound
+            int totalcost = currentcost + graph[path[level - 1]][i] + lowerbound;
+            // If the total cost is less than the minimum cost, continue with the search
+            if (totalcost < mincost)
+            {
+                // Recursively solve the TSP for the next level (next city)
+                tsp_branchANDbound(graph, n, path, bestpath, currentcost + graph[path[level - 1]][i], 
+                                   mincost, level + 1, visited);
+            }
+            visited[i] = 0; // Unmark the city as visited (backtrack)
+        }
+    }
+}
+
+int main()
+{
+    int n;
+    cout << "Enter a no. of city:";
+    cin >> n; // Get the number of cities
+    cout << "Enter a cost of path(directed path is return 0):" << endl;
+    
+    // Create an adjacency matrix (graph) to represent the cost between cities
+    int **graph = new int*[n];
+    for (int i = 0; i < n; i++)
+    {
+        graph[i] = new int[n];
+        for (int j = 0; j < n; j++)
+        {
+            cin >> graph[i][j]; // Input the cost of traveling from city i to city j
+        }
+    }
+
+    int mincost = INT_MAX; // Initialize minimum cost as a large value
+    vector<int> path(n + 1), bestpath(n + 1), visited(n, 0); // Initialize vectors to store paths, best path, and visited cities
+    path[0] = 0; // Starting city is 0 (arbitrary)
+    visited[0] = 1; // Mark the starting city as visited
+
+    // Call the recursive branch and bound function to solve the TSP
+    tsp_branchANDbound(graph, n, path, bestpath, 0, mincost, 1, visited);
+
+    // Output the minimum cost and the best path
+    cout << "Total cost covering all point :" << mincost << endl;
+    for (int i = 0; i < n; ++i)
+    {
+        cout << bestpath[i] << "-->"; // Print the best path
+    }
+    cout << bestpath[0]; // Print the starting city at the end to complete the cycle
+
+    // Deallocate dynamically allocated memory for the graph
+    for (int i = 0; i < n; i++)
+    {
+        delete[] graph[i];
+    }
+    delete[] graph;
+
+    return 0;
+}
+
+
+THEORY:
+Maximum Clique Problem
+Problem: Given an undirected graph, find the largest clique (subset of vertices such that every two vertices are adjacent).
+Application: B&B explores all subsets of vertices, pruning the ones that cannot form a clique or are too small to improve upon the best-known solution.
+8. Assignment Problem
+Problem: Given a set of workers and a set of tasks, assign each worker to exactly one task such that the total cost of assignments is minimized.
+Application: B&B explores all possible assignments, pruning unpromising branches based on cost bounds.
+9. Cutting Stock Problem
+Problem: Given a set of large rolls of material and smaller orders of materials, determine how to cut the rolls into smaller pieces in a way that minimizes waste.
+Application: B&B can solve this by branching on possible cuts and using bounds to discard configurations with excessive waste.
+10. Shortest Path in Graphs with Constraints
+Problem: Find the shortest path in a graph subject to additional constraints (e.g., a constraint on the number of intermediate nodes).
+Application: B&B can be used to search for paths while enforcing constraints and pruning paths that violate the constraints.
+11. Matrix Chain Multiplication
+Problem: Given a sequence of matrices, determine the most efficient way to multiply them together in terms of the number of scalar multiplications required.
+Application: B&B can explore different ways to parenthesize the matrix product and prune combinations that cannot result in a more efficient solution.
+12. Network Design Problems
+Problem: Design a network (such as a telecommunication network or transportation network) that connects a set of nodes with minimal cost, satisfying various constraints.
+Application: Branch and Bound is used to explore different network configurations and prune designs that exceed cost constraints or fail to meet performance requirements.
+'
+
+Advantages of Branch and Bound:
+Optimal Solution: It guarantees the optimal solution if it explores the entire search space.
+Efficient Pruning: By pruning the search space, it can often solve problems faster than exhaustive search algorithms like brute-force.
+Flexibility: It can be applied to a wide range of combinatorial optimization problems.
+
+Disadvantages of Branch and Bound:
+Exponential Time Complexity: In the worst case, B&B still has an exponential time complexity, although it can be faster than brute-force for many problems.
+Memory Consumption: Storing all nodes of the search tree in memory can be space-intensive.
+
+TIME AND SPACE COMPLEXITY:
+Example: Traveling Salesman Problem (TSP)
+Time Complexity (Worst Case): 
+O(N!), where 
+N is the number of cities.
+Time Complexity (Average Case with Pruning): Can be much better, depending on the effectiveness of pruning.
+Space Complexity: 
+O(N), since we are storing the partial solutions and the search tree can be as deep as
+N.

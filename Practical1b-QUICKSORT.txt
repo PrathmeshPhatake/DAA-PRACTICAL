@@ -1,0 +1,98 @@
+PRACTICAL1-QUICKSORT
+CODE:
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <chrono> // For measuring time
+using namespace std;
+
+// Partition function for Quick Sort
+int partition(vector<int>& arr, int low, int high) {
+    int pivot = arr[low];
+    int i = low + 1;
+    int j = high;
+    while (i <= j) {
+        while (arr[i] <= pivot && i <= high) {
+            i++;
+        }
+        while (arr[j] > pivot && j >= low) {
+            j--;
+        }
+        if (i < j) {
+            swap(arr[i], arr[j]);
+        }
+    }
+    swap(arr[low], arr[j]);
+    return j;
+}
+
+// Recursive Quick Sort function
+void quickSort(vector<int>& arr, int low, int high) {
+    if (low < high) {
+        int pivotIndex = partition(arr, low, high);
+        quickSort(arr, low, pivotIndex - 1);
+        quickSort(arr, pivotIndex + 1, high);
+    }
+}
+
+int main() {
+    // Generate 500 random values
+    int n = 500;
+    vector<int> arr(n);
+    for (int i = 0; i < n; i++) {
+        arr[i] = rand() % 1000; // Random values between 0 and 999
+    }
+
+    cout << "Unsorted array: ";
+    for (int i = 0; i < n; i++) {
+        cout << arr[i] << " ";
+    }
+    cout << endl;
+
+    // Measure sorting time
+    auto start = chrono::high_resolution_clock::now(); // Start time
+    quickSort(arr, 0, n - 1);
+    auto end = chrono::high_resolution_clock::now();   // End time
+
+    // Calculate duration
+    auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
+
+    cout << "Sorted array: ";
+    for (int i = 0; i < n; i++) {
+        cout << arr[i] << " ";
+    }
+    cout << endl;
+
+    cout << "Time taken to sort 500 elements: " << duration.count() << " milliseconds" << endl;
+
+    return 0;
+}
+
+
+
+TIME AND SPACE :
+
+The time complexity of Quick Sort depends on the pivot selection and the partitioning of the array. Here is a breakdown of the time complexity in best, average, and worst-case scenarios:
+
+1. Best Case
+Condition: The pivot divides the array into two equal halves at every recursive step.
+Each partition step processes 
+𝑛
+n elements and reduces the size of subarrays by half.
+Recurrence Relation:
+T(n)=2T( 2n)+O(n)
+Time Complexity:
+O(nlogn)
+2. Average Case
+Condition: The pivot is selected randomly, resulting in partitions that are not perfectly balanced but close enough on average.
+Similar recurrence as the best case, as the depth of recursion remains logarithmic on average.
+Time Complexity:
+O(nlogn)
+
+3. Worst Case
+Condition: The pivot divides the array into two highly unbalanced parts (e.g., one part with 
+𝑛−1 elements and the other with  1 element
+Recurrence Relation:
+T(n)=T(n−1)+O(n)
+This results in a recursive call for every single element, leading to linear recursion depth.
+Time Complexity:O(n 2)

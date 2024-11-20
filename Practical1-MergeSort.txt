@@ -1,0 +1,111 @@
+Practical1-MergeSort
+
+Code:
+#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+// Merge function to merge two halves
+int merge(vector<int>& arr, int low, int mid, int high) {
+    vector<int> temp;
+    int left = low;
+    int right = mid + 1;
+
+    // Merging two halves into temp
+    while (left <= mid && right <= high) {
+        if (arr[left] <= arr[right]) {
+            temp.push_back(arr[left]);
+            left++;
+        } else {
+            temp.push_back(arr[right]);
+            right++;
+        }
+    }
+
+    // Copy remaining elements from the left half
+    while (left <= mid) {
+        temp.push_back(arr[left]);
+        left++;
+    }
+
+    // Copy remaining elements from the right half
+    while (right <= high) {
+        temp.push_back(arr[right]);
+        right++;
+    }
+
+    // Copy the sorted data from temp back into the original array
+    for (int i = low; i <= high; i++) {
+        arr[i] = temp[i - low];
+    }
+}
+
+// Merge Sort function to divide the array and recursively sort
+void merge_sort(vector<int>& arr, int low, int high) {
+    // Base case: if there's only one element, return
+    if (low >= high) return;
+
+    int mid = (low + high) / 2;
+
+    // Recursively sort the left half
+    merge_sort(arr, low, mid);
+
+    // Recursively sort the right half
+    merge_sort(arr, mid + 1, high);
+
+    // Merge the two halves
+    merge(arr, low, mid, high);
+}
+
+int main() {
+    int n;
+    cout << "Enter the size of the array: ";
+    cin >> n;
+
+    vector<int> arr(n);
+    cout << "Enter the array elements: ";
+    for (int i = 0; i < n; i++) {
+        cin >> arr[i];
+    }
+
+    // Perform merge sort on the array
+    merge_sort(arr, 0, n - 1);
+
+    // Output the sorted array
+    cout << "Sorted array: ";
+    for (int i = 0; i < n; i++) {
+        cout << arr[i] << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
+
+THEORY:
+Steps in Merge Sort:
+
+Dividing the Array:
+The array is recursively divided into two halves by finding the midpoint.
+If the array has more than one element, split it into two sub-arrays.
+Recursively apply the same splitting process to each sub-array until each sub-array has only one element (base case).
+
+Merging Process:
+After the array is divided into sub-arrays of size 1 (which are trivially sorted), these sub-arrays are merged in a sorted manner.
+The merging process compares the smallest element from the left sub-array with the smallest element from the right sub-array, and the smaller element is placed into the merged array.
+This process continues until all elements from both sub-arrays are placed into the merged array.
+
+Final Sorted Array:
+The merging continues until the entire array is reconstructed into one sorted array.
+
+TIME AND SPACE COMPLEXITY :
+1. Best Case Average and Worst case
+
+Condition: The pivot divides the array into two equal halves at every recursive step.
+Each partition step processes 
+𝑛
+n elements and reduces the size of subarrays by half.
+Recurrence Relation:
+T(n)=2T( 2/n​)+O(n)
+Time Complexity:
+O(nlogn)

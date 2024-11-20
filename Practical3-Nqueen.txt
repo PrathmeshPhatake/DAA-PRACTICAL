@@ -1,0 +1,105 @@
+Practical3-Nqueen
+CODE:
+// at each row check which positon valid 
+// for valdiaiton check 1] previous row with same col 
+// 2] prev row left bound 3] prev row right bound
+// if not match then lept it zero (backtrack)
+// T&C:O(N!)
+// S&C:O(N^2);
+#include<iostream>
+#include<vector>
+#include<chrono>
+
+using namespace std;
+bool issafe(vector<vector<int>>&arr,int x,int y,int n)
+{
+    // check upper row
+   for(int row=0;row<x;row++)
+   {
+     if(arr[row][y]==1)return false;
+   }
+  // CHEKC LEFT UPPER  DIAGONAL
+   int row=x;
+   int col=y;
+   while(row>=0 && col>=0)
+   {
+    if(arr[row][col]==1)
+    return false;
+    row--;
+    col--;
+   }
+
+   // RIGHT UPPER DIAGONAL
+   row=x;
+   col=y;
+   while(row>=0 && col<n)
+   {
+    if(arr[row][col]==1)return false;
+    row--;
+    col++;
+   }
+   return true;
+}
+bool Nqueen(vector<vector<int>>&arr,int x,int n)
+{
+    
+    if(x>=n)return true;
+    for(int col=0;col<n;col++)
+    {
+        if(issafe(arr,x,col,n))
+        {
+            arr[x][col]=1;
+            if(Nqueen(arr,x+1,n))
+            {
+                return true;
+            }
+            arr[x][col]=0;
+        }
+    }   
+    return false;
+}
+int main(){
+    int n;
+    cout << "Enter a Queen size: ";
+    cin >> n;
+
+    // Start measuring time
+    auto start = chrono::high_resolution_clock::now();
+
+    vector<vector<int>> arr(n, vector<int>(n, 0));
+
+    // Call the N-Queen solution function
+    Nqueen(arr, 0, n);
+
+    // Stop measuring time
+    auto stop = chrono::high_resolution_clock::now();
+    auto duration = chrono::duration_cast<chrono::microseconds>(stop - start); // Measure in microseconds
+
+    // Output the solution
+    cout << "Solution for the " << n << " Queens problem: \n";
+    for(int i = 0; i < n; i++)
+    {
+        for(int j = 0; j < n; j++)
+        {
+            cout << arr[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+    // Print the time taken
+    cout << "Time taken for solving the problem: " << duration.count() << " microsecond" << endl;
+
+    return 0;
+}
+
+
+Time & space complexity 
+Summary:
+Time Complexity: 
+O(N!) (in the worst case, since we may need to check all possible permutations of the queens).
+Space Complexity: O(N 2 ) (for storing the board and recursion stack).
+
+
+
+
+

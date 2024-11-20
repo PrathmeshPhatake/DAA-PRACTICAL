@@ -1,0 +1,241 @@
+Practical-6:TSP-GENETICALGORITHM
+
+CODE:
+#include <bits/stdc++.h>
+using namespace std;
+
+// Parameters for the Genetic Algorithm
+const int POPULATION_SIZE = 100;
+const int GENERATIONS = 500;
+const double MUTATION_RATE = 0.1;
+
+// Function to calculate the total distance of a path
+double calculateDistance(vector<int>& path, vector<vector<double>>& distanceMatrix) {
+    double totalDistance = 0.0;
+    for (int i = 0; i < path.size() - 1; ++i) {
+        totalDistance += distanceMatrix[path[i]][path[i + 1]];
+    }
+    totalDistance += distanceMatrix[path.back()][path[0]]; // Return to the starting city
+    return totalDistance;
+}
+
+// Generate a random path
+vector<int> generateRandomPath(int n) {
+    vector<int> path(n);
+    iota(path.begin(), path.end(), 0);
+    random_shuffle(path.begin(), path.end());
+    return path;
+}
+
+// Create initial population
+vector<vector<int>> initializePopulation(int n, int populationSize) {
+    vector<vector<int>> population;
+    for (int i = 0; i < populationSize; ++i) {
+        population.push_back(generateRandomPath(n));
+    }
+    return population;
+}
+
+// Selection using roulette wheel
+vector<int> rouletteWheelSelection(vector<vector<int>>& population, vector<double>& fitness) {
+    double totalFitness = accumulate(fitness.begin(), fitness.end(), 0.0);
+    double randomValue = (double)rand() / RAND_MAX * totalFitness;
+
+    double cumulativeSum = 0.0;
+    for (int i = 0; i < fitness.size(); ++i) {
+        cumulativeSum += fitness[i];
+        if (cumulativeSum >= randomValue) {
+            return population[i];
+        }
+    }
+    return population.back(); // Fallback
+}
+
+// Crossover: Order Crossover (OX)
+pair<vector<int>, vector<int>> crossover(vector<int>& parent1, vector<int>& parent2) {
+    int n = parent1.size();
+    vector<int> child1(n, -1), child2(n, -1);
+
+    int start = rand() % n;
+    int end = start + rand() % (n - start);
+
+    for (int i = start; i <= end; ++i) {
+        child1[i] = parent1[i];
+        child2[i] = parent2[i];
+    }
+
+    auto fillChild = [&](vector<int>& child, vector<int>& parent) {
+        int index = (end + 1) % n;
+        for (int i = 0; i < n; ++i) {
+            int value = parent[(end + 1 + i) % n];
+            if (find(child.begin(), child.end(), value) == child.end()) {
+                child[index] = value;
+                index = (index + 1) % n;
+            }
+        }
+    };
+
+    fillChild(child1, parent2);
+    fillChild(child2, parent1);
+
+    return {child1, child2};
+}
+
+// Mutation: Swap Mutation
+void mutate(vector<int>& path) {
+    if ((double)rand() / RAND_MAX < MUTATION_RATE) {
+        int i = rand() % path.size();
+        int j = rand() % path.size();
+        swap(path[i], path[j]);
+    }
+}
+
+// Genetic Algorithm for TSP
+vector<int> geneticAlgorithm(vector<vector<double>>& distanceMatrix, int populationSize, int generations) {
+    int n = distanceMatrix.size();
+    vector<vector<int>> population = initializePopulation(n, populationSize);
+
+    vector<int> bestPath;
+    double bestDistance = DBL_MAX;
+
+    for (int gen = 0; gen < generations; ++gen) {
+        vector<double> fitness(populationSize);
+        for (int i = 0; i < populationSize; ++i) {
+            double distance = calculateDistance(population[i], distanceMatrix);
+            fitness[i] = 1.0 / distance; // Fitness is the inverse of distance
+        }
+
+        vector<vector<int>> newPopulation;
+        while (newPopulation.size() < populationSize) {
+            vector<int> parent1 = rouletteWheelSelection(population, fitness);
+            vector<int> parent2 = rouletteWheelSelection(population, fitness);
+
+            auto children = crossover(parent1, parent2);
+            auto& child1 = children.first;
+            auto& child2 = children.second;
+
+            mutate(child1);
+            mutate(child2);
+
+            newPopulation.push_back(child1);
+            newPopulation.push_back(child2);
+        }
+
+        population = newPopulation;
+
+        // Track the best solution
+        for (auto& path : population) {
+            double distance = calculateDistance(path, distanceMatrix);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestPath = path;
+            }
+        }
+    }
+
+    return bestPath;
+}
+
+int main() {
+    srand(time(0));
+
+    int n;
+    cout << "Enter the number of cities: ";
+    cin >> n;
+
+    vector<vector<double>> distanceMatrix(n, vector<double>(n));
+    cout << "Enter the distance matrix:\n";
+    for (int i = 0; i < n; ++i) {
+        for (int j = 0; j < n; ++j) {
+            cin >> distanceMatrix[i][j];
+        }
+    }
+
+    vector<int> bestPath = geneticAlgorithm(distanceMatrix, POPULATION_SIZE, GENERATIONS);
+
+    cout << "\nOptimal Path: ";
+    for (int city : bestPath) {
+        cout << city << " -> ";
+    }
+    cout << bestPath[0] << "\n";
+
+    double bestDistance = calculateDistance(bestPath, distanceMatrix);
+    cout << "Minimum Distance: " << bestDistance << "\n";
+
+    return 0;
+}
+
+Time Complexity 
+Initialization of Population: Generating random paths for the population:  O(P⋅N), where 𝑃  is the population size and 𝑁 N is the number of cities.
+
+Fitness Evaluation:
+ Calculating distances for all paths in the population:  O(P⋅N) per generation. 
+
+Selection: 
+Roulette wheel selection involves cumulative fitness computation: 𝑂 (P) per selection, done  2⋅P times for the populationTotal: O(P 2 ) per generation.
+
+Crossover:
+ Order crossover involves O(N) operations to construct the child. Done P times per generation. 
+Total:  O(P⋅N).
+ 
+Mutation: 
+Mutation involves swapping two elements in the path: 𝑂 ( 1 ) . Done  P times per generation. Total: 𝑂 ( 𝑃 ) 
+
+Generations: 
+The algorithm runs for 𝐺  generations. Multiply the above costs by  G. Overall Time Complexity: 𝑂 ( 𝐺 ⋅ ( 𝑃 ⋅ 𝑁 + 𝑃 2 ) )  If P is large, the quadratic term 𝑂 ( 𝑃 2 ) dominates, making it the bottleneck. 
+
+Space Complexity 
+Distance Matrix: 
+Storing the  N×N matrix: O(N 2 ).
+ Population: Storing 𝑃 P paths, each of length 𝑁  O(P⋅N).
+Fitness Array: Fitness values for 𝑃  paths: O(P). 
+Temporary Storage: Storing intermediate children during crossover and mutation:  O(N).
+ Overall Space Complexity: 𝑂 ( 𝑁 2 + 𝑃 ⋅ 𝑁 ) 
+
+
+ Summary 
+Time Complexity:  O(G⋅(P⋅N+P 2 )).
+Space Complexity: 𝑂 ( 𝑁 2 + 𝑃 ⋅ 𝑁 )
+
+
+
+WORKING OF FUNCTION:
+
+Here’s a detailed explanation of how each function works in the Genetic Algorithm for the Traveling Salesman Problem (TSP) without code:
+1. calculateDistance()
+Purpose: This function calculates the total distance of a given tour (path) in the TSP.
+Working:
+It computes the total distance by summing the distances between consecutive cities in the path.
+After traversing all cities in the path, it adds the distance from the last city back to the first city, completing the loop (as the salesman needs to return to the start point).
+2. generateRandomPath()
+Purpose: This function generates a random tour of the cities.
+Working:
+It initializes a list of city indices (from 0 to n-1) and randomly shuffles the list.
+This shuffled list represents a random path for the salesman to visit all cities.
+3. initializePopulation()
+Purpose: This function creates the initial population of random paths (tours) for the genetic algorithm.
+Working:
+It generates a specified number of random paths (using generateRandomPath()), which forms the initial population.
+Each path in the population represents a potential solution to the TSP.
+4. rouletteWheelSelection()
+Purpose: This function selects a parent for crossover based on fitness using a probabilistic approach.
+Working:
+It calculates the total fitness of the population. Fitness is defined as the inverse of the path length, so shorter paths have higher fitness.
+A random value is generated, and the population is traversed to accumulate fitness until the random value is reached. The path associated with that accumulated fitness is selected as the parent.
+This ensures that shorter (more fit) paths are more likely to be selected for crossover.
+5. crossover()
+Purpose: This function combines two parent paths to create two child paths using Order Crossover (OX).
+Working:
+A random section of one parent's path is copied to the child.
+The remaining positions in the child path are filled with the cities from the other parent, ensuring that no cities are repeated.
+This generates two offspring from two parents, maintaining genetic diversity.
+6. mutate()
+Purpose: This function introduces small random changes to a path to explore new solutions.
+Working:
+A random mutation occurs with a certain probability (mutation rate). The mutation consists of swapping two cities in the path, which may help the algorithm escape local minima and find a better global solution.
+7. geneticAlgorithm()
+Purpose: This function runs the genetic algorithm to find the best path (tour) for the TSP.
+Working:
+The population of random paths is repeatedly evolved over several generations.
+In each generation, the fitness of each path is evaluated, and a new population is created by selecting parents and performing crossover and mutation.
+The best path (tour) found during the algorithm’s execution is tracked, and at the end of all generations, this best path is returned as the solution to the TSP.

@@ -1,0 +1,82 @@
+Practical2-0/1 knapsack
+code:
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<climits>
+using namespace std;
+
+int func(const vector<int>& P, const vector<int>& W, int w, int i, vector<vector<int>>& dp) {
+    if (i == 0 || w == 0) {
+        return 0;
+    }
+    if (dp[i][w] != -1) {
+        return dp[i][w];
+    }
+    int take = INT_MIN;
+    if (W[i - 1] <= w) {
+        take = P[i - 1] + func(P, W, w - W[i - 1], i - 1, dp);
+    }
+    int non_take = func(P, W, w, i - 1, dp);
+    return dp[i][w] = max(take, non_take);
+}
+
+int tabulation(const vector<int>& P, const vector<int>& W, int w, int n, vector<vector<int>>& dp) {
+    for (int i = 1; i <= n; i++) {
+        for (int j = 0; j <= w; j++) {
+            if (W[i - 1] <= j) {
+                dp[i][j] = max(dp[i - 1][j], P[i - 1] + dp[i - 1][j - W[i - 1]]);
+            } else {
+                dp[i][j] = dp[i - 1][j];
+            }
+        }
+    }
+    return dp[n][w];
+}
+
+int main() {
+    int n, m;
+    cout << "Enter the number of items and maximum weight: ";
+    cin >> n >> m;
+
+    vector<int> P(n), W(n);
+    vector<vector<int>> dp(n + 1, vector<int>(m + 1, -1));
+
+    cout << "Enter the profits and weights of the items:" << endl;
+    for (int i = 0; i < n; i++) {
+        cin >> P[i] >> W[i];
+    }
+
+    // Calling the memoization function
+    cout << "Maximum Profit (Memoization): " << func(P, W, m, n, dp) << endl;
+
+    // Resetting the dp array for tabulation approach
+    fill(dp.begin(), dp.end(), vector<int>(m + 1, 0));
+
+    // Calling the tabulation function
+    cout << "Maximum Profit (Tabulation): " << tabulation(P, W, m, n, dp) << endl;
+
+    return 0;
+}
+
+EXAPMLE:
+Profits: P = [10, 40, 30, 50]
+Weights: W = [5, 4, 6, 3]
+Knapsack weight capacity: W = 5
+Number of items: n = 4
+OUPUT IS =50
+
+
+TIME AND SPCE COMPLEXITY :
+Summary:
+Memoization Approach:
+
+Time Complexity: 
+O(n×w)
+Space Complexity: 
+O(n×w) (for the DP table) +O(n) (for the recursion stack) = O(n×w)
+Tabulation Approach:
+Time Complexity: 
+O(n×w)
+Space Complexity: 
+O(n×w) (for the DP table)

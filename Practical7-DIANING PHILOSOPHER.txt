@@ -1,0 +1,121 @@
+//DIANING PHILOSOPHER 
+CODE:
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+#include <vector>
+#include <chrono>
+
+using namespace std;
+
+class DiningPhilosophers {
+private:
+    vector<mutex> forks; // Mutex for each fork
+    mutex pickMutex; // Mutex to ensure fairness
+public:
+    DiningPhilosophers(int numPhilosophers) : forks(numPhilosophers) {}
+
+    void dine(int id) {
+        while (true) {
+            think(id);
+            
+            pickMutex.lock();
+            forks[id].lock(); // Pick left fork
+            forks[(id + 1) % forks.size()].lock(); // Pick right fork
+            pickMutex.unlock();
+
+            eat(id);
+
+            forks[id].unlock(); // Put down left fork
+            forks[(id + 1) % forks.size()].unlock(); // Put down right fork
+        }
+    }
+
+    void think(int id) {
+        cout << "Philosopher " << id << " is thinking...\n";
+        this_thread::sleep_for(chrono::milliseconds(100 + rand() % 100));
+    }
+
+    void eat(int id) {
+        cout << "Philosopher " << id << " is eating...\n";
+        this_thread::sleep_for(chrono::milliseconds(100 + rand() % 100));
+    }
+};
+
+int main() {
+    int numPhilosophers = 5;
+    DiningPhilosophers dp(numPhilosophers);
+    vector<thread> threads;
+
+    // Start a thread for each philosopher
+    for (int i = 0; i < numPhilosophers; i++) {
+        threads.push_back(thread(&DiningPhilosophers::dine, &dp, i));
+    }
+
+    // Join threads
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    return 0;
+}
+
+
+Key Features of the Solution
+Mutex for Each Fork:
+
+A mutex protects each fork, ensuring only one philosopher can hold it at a time.
+Pick Mutex:
+
+Ensures that a philosopher picks up both forks in a controlled order, preventing deadlock by avoiding circular wait.
+Concurrent Thinking and Eating:
+
+Philosophers think and eat concurrently using threads.
+Discussion
+1. Fairness
+The use of pickMutex ensures that philosophers pick up forks in the order of their request, preventing one philosopher from monopolizing resources.
+Philosophers are treated fairly by design.
+2. Starvation
+Starvation is avoided because no philosopher is indefinitely prevented from accessing forks due to the fair locking mechanism.
+3. Deadlock
+Deadlock is avoided by:
+Ensuring that philosophers pick forks in a globally consistent order.
+Avoiding circular wait by holding a pickMutex lock while picking both forks.
+4. Scalability
+The solution scales well for small to medium numbers of philosophers, but as the number increases, contention on the pickMutex may lead to reduced parallelism.
+To improve scalability for large numbers of philosophers, you could use a more decentralized approach, such as arbitrating using a waiter process or token ring.
+Alternative Approaches
+Asymmetric Fork Picking:
+
+Philosophers alternate the order of picking forks (e.g., odd-numbered pick left first, even-numbered pick right first) to reduce contention.
+Waiter Approach:
+
+A centralized "waiter" controls access to forks and ensures that only a limited number of philosophers eat simultaneously.
+Chandy-Misra Algorithm:
+
+Uses a distributed token-passing system for scalable solutions.
+
+
+Scenarios:
+Parallel Processing:
+
+If a task is divided among n threads and each thread executes in O(T), the overall time complexity becomes O(T/n), where T is the original task time.
+Example: Sorting 1,000,000 elements using 4 threads may reduce sorting time from O(nlogn) to approximately O(nlogn/4).
+Thread Creation:
+Creating threads can add time complexity:
+In most systems, thread creation is approximately 
+O(1), but context-switching during thread execution can add overhead.
+Synchronization:
+If threads access shared resources, synchronization mechanisms like locks or semaphores may introduce additional complexity:
+Acquiring/releasing locks typically takes O(1), but contention among threads can lead to delays.
+2. Space Complexity
+Threads can increase memory usage because each thread requires:
+Stack Space:
+Each thread has its own stack, typically 1 MB or configurable, depending on the system.
+Space=number of threads×
+stack size per thread
+Space=number of threads×stack size per thread.
+Shared Memory:
+Threads share the same process memory, avoiding duplication. However, shared data structures may require additional memory for synchronization mechanisms.
+

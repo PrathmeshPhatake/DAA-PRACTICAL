@@ -1,0 +1,226 @@
+Practical-6 matrix-theread and sequentialy multiplication:
+
+
+CODE:
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <chrono>
+
+using namespace std;
+
+// Function to multiply matrices sequentially
+void sequentialMultiply(const vector<vector<int>>& A, const vector<vector<int>>& B, vector<vector<int>>& C) {
+    int rows = A.size();
+    int cols = B[0].size();
+    int innerDim = B.size();
+
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            C[i][j] = 0;
+            for (int k = 0; k < innerDim; ++k) {
+                C[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+}
+
+// Function to multiply a range of rows in matrix A with matrix B
+void multiplyChunk(const vector<vector<int>>& A, const vector<vector<int>>& B, vector<vector<int>>& C, int startRow, int endRow) {
+    int cols = B[0].size();
+    int innerDim = B.size();
+
+    for (int i = startRow; i < endRow; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            C[i][j] = 0;
+            for (int k = 0; k < innerDim; ++k) {
+                C[i][j] += A[i][k] * B[k][j];
+            }
+        }
+    }
+}
+
+// Function to multiply matrices using multithreading
+void multithreadedMultiply(const vector<vector<int>>& A, const vector<vector<int>>& B, vector<vector<int>>& C) {
+    int numThreads = thread::hardware_concurrency(); // Number of available CPU cores
+    vector<thread> threads;
+    int rows = A.size();
+    int rowsPerThread = rows / numThreads;
+
+    for (int t = 0; t < numThreads; ++t) {
+        int startRow = t * rowsPerThread;
+        int endRow = (t == numThreads - 1) ? rows : startRow + rowsPerThread;
+        threads.push_back(thread(multiplyChunk, cref(A), cref(B), ref(C), startRow, endRow));
+    }
+
+    for (auto& t : threads) {
+        t.join();
+    }
+}
+
+// Function to display a matrix
+void displayMatrix(const vector<vector<int>>& matrix) {
+    for (const auto& row : matrix) {
+        for (const auto& val : row) {
+            cout << val << " ";
+        }
+        cout << "\n";
+    }
+}
+
+int main() {
+    // Input matrix dimensions
+    int rowsA, colsA, rowsB, colsB;
+    cout << "Enter dimensions of Matrix A (rows cols): ";
+    cin >> rowsA >> colsA;
+    cout << "Enter dimensions of Matrix B (rows cols): ";
+    cin >> rowsB >> colsB;
+
+    if (colsA != rowsB) {
+        cout << "Matrix multiplication is not possible. Number of columns in A must equal rows in B.\n";
+        return 1;
+    }
+
+    // Input matrix values
+    vector<vector<int>> A(rowsA, vector<int>(colsA));
+    vector<vector<int>> B(rowsB, vector<int>(colsB));
+    vector<vector<int>> C(rowsA, vector<int>(colsB)); // Result matrix
+
+    cout << "Enter values for Matrix A:\n";
+    for (int i = 0; i < rowsA; ++i) {
+        for (int j = 0; j < colsA; ++j) {
+            cin >> A[i][j];
+        }
+    }
+
+    cout << "Enter values for Matrix B:\n";
+    for (int i = 0; i < rowsB; ++i) {
+        for (int j = 0; j < colsB; ++j) {
+            cin >> B[i][j];
+        }
+    }
+
+    // Sequential multiplication
+    auto start = chrono::high_resolution_clock::now();
+    sequentialMultiply(A, B, C);
+    auto end = chrono::high_resolution_clock::now();
+    auto seqTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+    cout << "Sequential multiplication time: " << seqTime << " ns\n";
+
+    cout << "Resultant Matrix (Sequential):\n";
+    displayMatrix(C);
+
+    // Multithreaded multiplication
+    start = chrono::high_resolution_clock::now();
+    multithreadedMultiply(A, B, C);
+    end = chrono::high_resolution_clock::now();
+    auto multiTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+    cout << "Multithreaded multiplication time: " << multiTime << " ns\n";
+
+    cout << "Resultant Matrix (Multithreaded):\n";
+    displayMatrix(C);
+
+    return 0;
+}
+
+THEORY EXPLANNITION:
+Step 3: Sequential Multiplication
+The sequentialMultiply function calculates the product row by row without using parallelization.
+Logic:
+For each row 
+
+i in Matrix A:
+For each column 
+
+j in Matrix B:
+Compute the dot product of the 
+i-th row of 
+A and the 
+j-th column of 
+B:
+C[i][j]= 
+k=0∑colsA−1A[i][k]×B[k][j]
+The time taken for this operation is recorded using the chrono library.
+Output: The resultant matrix C is displayed.
+Step 4: Multithreaded Multiplication
+The multithreadedMultiply function performs matrix multiplication using multiple threads:
+The work is divided among threads based on the number of rows in Matrix A.
+Logic:
+The total rows of A are divided equally among available threads.
+Each thread is assigned a range of rows to compute.
+The multiplyChunk function is used to compute the rows assigned to each thread.
+For every assigned row, it computes each element using the same dot-product logic as sequential multiplication.
+Once all threads complete, the result is combined into C.
+The time taken for this operation is recorded using the chrono library.
+Step 5: Time Comparison
+The program calculates and prints the time taken (in nanoseconds) for:
+Sequential Multiplication.
+Multithreaded Multiplication.
+By comparing the times, the user can see the performance improvement due to multithreading.
+
+
+
+TIME AND SPACE COMPLEXITY:
+Time Complexity
+1. Sequential Matrix Multiplication
+For each element in Matrix C:
+We compute a dot product which involves 
+colsA multiplications and additions.
+Total Work:
+Matrix  C has  rowsA×colsB elements.
+Each element computation involves colsA operations.
+Total complexity:
+O(rowsA×colsB×colsA)
+
+2. Multithreaded Matrix Multiplication
+Each thread handles a chunk of rows from Matrix 
+A, but the total computational work is the same as the sequential approach:
+O(rowsA×colsB×colsA)
+
+Thread Overhead:
+Thread creation and joining add overhead, but this is negligible compared to the computational workload for large matrices.
+
+Speedup:
+In an ideal case with T threads:
+Time per thread= 
+O(rowsA×colsB×colsA)/T
+​
+Actual speedup depends on:
+1)Number of available CPU cores.
+2)Overheads due to thread synchronizatiN
+3)Matrix size (smaller matrices may not benefit much).
+
+Space Complexity
+1. Sequential Matrix Multiplication
+Matrices:
+Input matrices A and B require O(rowsA×colsA) and O(rowsB×colsB) space,respectively.Resultantmatrix O(rowsA×colsB).
+Temporary Storage:
+No additional space is required.
+Total:
+
+O(rowsA×colsA+rowsB×colsB+rowsA×colsB)
+2. Multithreaded Matrix Multiplication
+Same as Sequential:
+Input matrices 
+𝐴,B, and resultant matrix C require the same space.
+Thread Overhead:
+Each thread uses stack space for its execution context, but this is minimal compared to matrix storage.
+Total:
+O(rowsA×colsA+rowsB×colsB+rowsA×colsB)
+
+
+CONCLUSION:
+Which Method Is Better?
+Small Matrices:
+Use sequential multiplication.
+The overhead of thread management outweighs the benefit of parallelization.
+
+Large Matrices:
+Use multithreaded multiplication.
+It significantly reduces time on multi-core systems by parallelizing the workload.
+
+Hardware Constraints:
+If running on a single-core processor, sequential is as good as multithreaded because no parallelism is possible
+
+Real-Time Systems:
+Multithreaded is better in scenarios requiring high performance, such as real-time processing or scientific computations.
