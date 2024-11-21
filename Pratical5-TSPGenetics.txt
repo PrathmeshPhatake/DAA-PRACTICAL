@@ -239,3 +239,145 @@ Working:
 The population of random paths is repeatedly evolved over several generations.
 In each generation, the fitness of each path is evaluated, and a new population is created by selecting parents and performing crossover and mutation.
 The best path (tour) found during the algorithm’s execution is tracked, and at the end of all generations, this best path is returned as the solution to the TSP.
+
+
+
+
+
+
+How It Works
+Traveling Salesman Problem (TSP):
+
+Given 
+𝑛
+n cities and distances between them, find the shortest path that visits each city exactly once and returns to the starting city.
+Genetic Algorithm:
+
+A population-based optimization technique that mimics natural selection and evolution.
+Steps:
+Initialization: Generate a population of random solutions (paths).
+Fitness Evaluation: Calculate the fitness of each solution.
+Selection: Choose solutions for reproduction based on fitness.
+Crossover: Combine two solutions to produce offspring.
+Mutation: Randomly modify solutions to maintain diversity.
+Repeat: Iterate for a fixed number of generations to improve the solution.
+Function Breakdown and Dry Run
+1. calculateDistance
+Purpose: Computes the total distance of a path.
+Inputs:
+path: A vector representing the order in which cities are visited.
+distanceMatrix: A 2D vector storing distances between cities.
+Logic:
+Sum the distances between consecutive cities in path.
+Add the distance from the last city back to the first.
+Example:
+lua
+Copy code
+Path: [0, 2, 1, 3]
+Distance Matrix: [[0, 1, 2, 3], [1, 0, 4, 5], [2, 4, 0, 6], [3, 5, 6, 0]]
+
+Total Distance = d[0][2] + d[2][1] + d[1][3] + d[3][0]
+               = 2 + 4 + 5 + 3 = 14
+2. generateRandomPath
+Purpose: Generates a random path through all cities.
+Logic:
+Create a vector of integers from 0 to n-1 (city indices).
+Shuffle the vector randomly.
+Example:
+makefile
+Copy code
+Input: n = 4
+Output: [2, 0, 3, 1] (random shuffle of [0, 1, 2, 3])
+3. initializePopulation
+Purpose: Creates the initial population of random paths.
+Logic:
+Call generateRandomPath multiple times to fill the population with populationSize random paths.
+Example:
+lua
+Copy code
+Input: n = 4, populationSize = 3
+Output: [[2, 0, 3, 1], [1, 2, 3, 0], [3, 1, 0, 2]]
+4. rouletteWheelSelection
+Purpose: Selects a parent path based on fitness using a probabilistic approach.
+Logic:
+Compute cumulative probabilities proportional to fitness.
+Generate a random number and select the path corresponding to that probability.
+Example:
+mathematica
+Copy code
+Fitness: [0.2, 0.5, 0.3]
+Cumulative Sum: [0.2, 0.7, 1.0]
+Random Value: 0.6 -> Select path with index 1.
+5. crossover
+Purpose: Produces two offspring paths by combining two parent paths using Order Crossover (OX).
+Logic:
+Select a random segment from parent1 and copy it into child1.
+Fill the remaining cities in the order they appear in parent2.
+Repeat for child2.
+Example:
+vbnet
+Copy code
+Parent1: [0, 1, 2, 3]
+Parent2: [2, 3, 1, 0]
+Random Range: start=1, end=2
+Child1: [-1, 1, 2, -1] -> [3, 1, 2, 0]
+6. mutate
+Purpose: Introduces randomness by swapping two cities in the path.
+Logic:
+With a probability of MUTATION_RATE, pick two indices and swap their values.
+Example:
+makefile
+Copy code
+Input: [0, 1, 2, 3]
+Mutation: Swap indices 1 and 3
+Output: [0, 3, 2, 1]
+7. geneticAlgorithm
+Purpose: Runs the genetic algorithm for the given distance matrix.
+Steps:
+Initialize: Create an initial population.
+Evaluate Fitness: Compute fitness for each path.
+Selection: Select parents for reproduction using rouletteWheelSelection.
+Crossover: Generate offspring using crossover.
+Mutation: Mutate the offspring using mutate.
+Replace Population: Use the new population for the next generation.
+Track the best solution across generations.
+Dry Run
+Input:
+lua
+Copy code
+Number of cities: n = 4
+Distance Matrix:
+[[0, 10, 15, 20],
+ [10, 0, 35, 25],
+ [15, 35, 0, 30],
+ [20, 25, 30, 0]]
+Execution:
+Initialize Population:
+
+lua
+Copy code
+Population: [[0, 1, 2, 3], [3, 2, 0, 1], [1, 3, 0, 2]]
+Evaluate Fitness:
+
+makefile
+Copy code
+Path: [0, 1, 2, 3] -> Distance = 10 + 35 + 30 + 20 = 95, Fitness = 1/95
+Path: [3, 2, 0, 1] -> Distance = ...
+Selection:
+
+Use rouletteWheelSelection to select parents.
+Crossover and Mutation:
+
+Generate new paths by combining selected parents and mutating them.
+Repeat:
+
+Iterate for GENERATIONS times.
+Output:
+The algorithm returns the best path and its minimum distance.
+
+Example Output:
+
+rust
+Copy code
+Optimal Path: 0 -> 2 -> 3 -> 1 -> 0
+Minimum Distance: 80
